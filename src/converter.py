@@ -52,10 +52,13 @@ def convert_visio(
 
     try:
         import libvisio_ng  # noqa: F401
-    except ImportError:
+    except ImportError as e:
+        import sys
+        paths = "\n".join(sys.path[:8])
         return ConversionResult(
-            error="libvisio-ng がインストールされていません。\n"
-                  "pip install libvisio-ng を実行してください。"
+            error=f"libvisio_ng のインポートに失敗しました。\n\n"
+                  f"エラー詳細: {e}\n\n"
+                  f"sys.path (先頭8件):\n{paths}"
         )
 
     try:

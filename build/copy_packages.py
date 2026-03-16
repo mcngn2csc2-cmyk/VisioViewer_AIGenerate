@@ -1,10 +1,30 @@
 """
-copy_packages.py - Post-build script to copy libvisio_ng and olefile into the PyInstaller bundle.
-Called by build_exe.bat after pyinstaller finishes.
+copy_packages.py - Post-build script to copy Python packages into the PyInstaller bundle.
+Handles both package directories (__init__.py) and single-file modules (.py).
 """
 import os
 import shutil
 import sys
+
+
+def copy_package(pkg_name: str, internal_dir: str) -> None:
+    mod = __import__(pkg_name)
+    src_file = os.path.abspath(mod.__file__)
+    print(f"  {pkg_name} found at: {src_file}")
+
+    if os.path.basename(src_file) == "__init__.py":
+        # Package directory (e.g. libvisio_ng/__init__.py)
+        src_dir = os.path.dirname(src_file)
+        dst_dir = os.path.join(internal_dir, pkg_name)
+        if os.path.exists(dst_dir):
+            shutil.rmtree(dst_dir)
+        shutil.copytree(src_dir, dst_dir)
+        print(f"  Copied directory: {src_dir} -> {dst_dir}")
+    else:
+        # Single-file module (e.g. olefile.py)
+        dst_file = os.path.join(internal_dir, os.path.basename(src_file))
+        shutil.copy2(src_file, dst_file)
+        print(f"  Copied file: {src_file} -> {dst_file}")
 
 
 def main():
@@ -14,17 +34,9 @@ def main():
         print(f"[ERROR] _internal directory not found: {internal_dir}")
         sys.exit(1)
 
-    packages = ["libvisio_ng", "olefile"]
-
-    for pkg_name in packages:
+    for pkg_name in ["libvisio_ng", "olefile"]:
         try:
-            mod = __import__(pkg_name)
-            src = os.path.dirname(os.path.abspath(mod.__file__))
-            dst = os.path.join(internal_dir, pkg_name)
-            if os.path.exists(dst):
-                shutil.rmtree(dst)
-            shutil.copytree(src, dst)
-            print(f"  Copied {pkg_name}: {src} -> {dst}")
+            copy_package(pkg_name, internal_dir)
         except ImportError:
             print(f"  [WARN] {pkg_name} not found, skipping.")
         except Exception as e:
