@@ -1,0 +1,11 @@
+# Visio Viewer - 依存パッケージ
+# pip install -r requirements.txt でインストール
+
+# Visio ファイル変換エンジン（VSD/VSDX → SVG）
+libvisio-ng>=0.6.0
+
+# Qt6 GUI フレームワーク（SVGウィジェット含む）
+# 注意: pyside6-essentials を使うとインストールサイズを削減できます
+#   pip install pyside6-essentials  ← EXEビルド時推奨
+#   pip install pyside6             ← 通常開発時
+PySide6>=6.6.0
