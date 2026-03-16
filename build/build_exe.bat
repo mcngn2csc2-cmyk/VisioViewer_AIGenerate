@@ -1,81 +1,81 @@
 @echo off
 REM ================================================================
-REM build_exe.bat - Visio Viewer を Windows EXE にビルドするスクリプト
+REM build_exe.bat - Build Visio Viewer as Windows EXE
 REM
-REM 前提条件:
-REM   - Python 3.11 以上がインストールされていること
-REM   - このスクリプトは build\ フォルダで実行すること
+REM Requirements:
+REM   - Python 3.11 or later must be installed
+REM   - Run this script from the project root or build\ folder
 REM
-REM 使い方:
+REM Usage:
 REM   build\build_exe.bat
 REM ================================================================
 
 setlocal enabledelayedexpansion
 
 echo ====================================================
-echo  Visio Viewer - Windows EXE ビルド
+echo  Visio Viewer - Windows EXE Build
 echo ====================================================
 echo.
 
-REM --- Python バージョン確認 ---
+REM --- Check Python ---
 python --version >nul 2>&1
 if errorlevel 1 (
-    echo [ERROR] Python が見つかりません。Python 3.11+ をインストールしてください。
+    echo [ERROR] Python not found. Please install Python 3.11+.
     pause
     exit /b 1
 )
 
-echo [1/5] 仮想環境の作成...
+echo [1/5] Creating virtual environment...
 cd /d "%~dp0.."
 if exist ".venv_build" (
-    echo     既存の仮想環境を削除します...
+    echo     Removing existing virtual environment...
     rmdir /s /q ".venv_build"
 )
 python -m venv .venv_build
 if errorlevel 1 (
-    echo [ERROR] 仮想環境の作成に失敗しました。
+    echo [ERROR] Failed to create virtual environment.
     pause
     exit /b 1
 )
 
-echo [2/5] 依存パッケージのインストール...
+echo [2/5] Installing dependencies...
 call .venv_build\Scripts\activate.bat
 
-REM pyside6-essentials でサイズ最適化（フルのpyside6は不要）
+REM Use pyside6-essentials to reduce EXE size
 pip install --upgrade pip >nul
 pip install pyside6-essentials libvisio-ng pyinstaller
 if errorlevel 1 (
-    echo [ERROR] パッケージのインストールに失敗しました。
+    echo [ERROR] Failed to install packages.
     pause
     exit /b 1
 )
 
-echo [3/5] 古いビルドを削除...
+echo [3/5] Cleaning old build artifacts...
 if exist "dist\VisioViewer" rmdir /s /q "dist\VisioViewer"
 if exist "build\VisioViewer" rmdir /s /q "build\VisioViewer"
 
-echo [4/5] PyInstaller でビルド中（数分かかります）...
+echo [4/5] Building with PyInstaller (this may take a few minutes)...
 cd build
 pyinstaller visio_viewer.spec
 if errorlevel 1 (
-    echo [ERROR] ビルドに失敗しました。
+    echo [ERROR] PyInstaller build failed.
     pause
     exit /b 1
 )
 cd ..
 
-echo [5/5] ビルド完了！
+echo [5/5] Build complete!
 echo.
-echo  出力先: dist\VisioViewer\VisioViewer.exe
+echo  Output: dist\VisioViewer\VisioViewer.exe
 echo.
 
-REM --- 出力サイズを表示 ---
+REM --- Show output size ---
 for /f "tokens=3" %%a in ('dir /s "dist\VisioViewer" ^| findstr "File(s)"') do (
     set SIZE=%%a
 )
-echo  合計サイズ: %SIZE% バイト
+echo  Total size: %SIZE% bytes
 
 echo.
-echo ビルド成功！ dist\VisioViewer\ フォルダを配布してください。
+echo Success! Distribute the dist\VisioViewer\ folder.
 echo.
 pause
