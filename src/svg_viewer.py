@@ -43,6 +43,7 @@ class SvgViewer(QGraphicsView):
 
         self._scene = QGraphicsScene(self)
         self._svg_item: QGraphicsSvgItem | None = None
+        self._renderer: QSvgRenderer | None = None  # Must be kept alive as long as _svg_item exists
         self._zoom_factor: float = 1.0
         self._is_initial_fit: bool = True  # True while no manual zoom has been applied
 
@@ -91,7 +92,9 @@ class SvgViewer(QGraphicsView):
             return
 
         item = QGraphicsSvgItem()
-        item.setSharedRenderer(renderer)
+        # renderer をインスタンス変数に保持する（ローカル変数だと GC に回収されてクラッシュする）
+        self._renderer = renderer
+        item.setSharedRenderer(self._renderer)
         item.setCacheMode(item.CacheMode.DeviceCoordinateCache)
 
         self._scene.addItem(item)
@@ -108,6 +111,7 @@ class SvgViewer(QGraphicsView):
         """表示内容をクリアする"""
         self._scene.clear()
         self._svg_item = None
+        self._renderer = None
         self._zoom_factor = 1.0
 
     def fit_to_window(self) -> None:
