@@ -58,6 +58,9 @@ class ThumbnailPanel(QWidget):
         """全ページの SVG データを受け取り、サムネイルを生成して表示する"""
         self._list.clear()
 
+        if len(svg_list) != len(page_names):
+            raise ValueError(f"svg_list length ({len(svg_list)}) != page_names length ({len(page_names)})")
+
         for i, (svg_data, name) in enumerate(zip(svg_list, page_names)):
             pixmap = self._render_thumbnail(svg_data)
             item = QListWidgetItem(pixmap, f"{i + 1}. {name}")
