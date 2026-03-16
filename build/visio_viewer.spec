@@ -2,12 +2,9 @@
 #
 # visio_viewer.spec - PyInstaller build configuration
 #
-# Usage:
-#   cd build
-#   pyinstaller visio_viewer.spec
-#
 # Output: dist/VisioViewer/VisioViewer.exe  (run THIS, not build/VisioViewer/)
 
+import sys
 from pathlib import Path
 from PyInstaller.utils.hooks import collect_all, collect_data_files
 
@@ -17,9 +14,25 @@ ICON_PATH = RESOURCES_DIR / "icon.ico"
 
 block_cipher = None
 
-# --- Collect libvisio_ng and olefile completely (all files, not just the module) ---
-libvisio_datas, libvisio_binaries, libvisio_hidden = collect_all("libvisio_ng")
-olefile_datas, olefile_binaries, olefile_hidden = collect_all("olefile")
+# --- Bundle libvisio_ng by finding its install path directly ---
+try:
+    import libvisio_ng as _lv
+    _lv_dir = Path(_lv.__file__).parent
+    libvisio_datas = [(str(_lv_dir), "libvisio_ng")]
+    print(f"[spec] libvisio_ng found at: {_lv_dir}")
+except ImportError:
+    raise SystemExit("[spec] ERROR: libvisio_ng is not installed in this Python env.\n"
+                     "Run the bat file to build (it installs into .venv_build).")
+
+# --- Bundle olefile (needed for .vsd binary format) ---
+try:
+    import olefile as _ol
+    _ol_dir = Path(_ol.__file__).parent
+    olefile_datas = [(str(_ol_dir), "olefile")]
+    print(f"[spec] olefile found at: {_ol_dir}")
+except ImportError:
+    olefile_datas = []
+    print("[spec] WARNING: olefile not found, .vsd support may be limited.")
 
 # --- Resources folder (optional) ---
 extra_datas = []
@@ -29,20 +42,16 @@ if RESOURCES_DIR.exists() and any(RESOURCES_DIR.iterdir()):
 a = Analysis(
     [str(Path(SRC_DIR) / "main.py")],
     pathex=[SRC_DIR],
-    binaries=libvisio_binaries + olefile_binaries,
+    binaries=[],
     datas=libvisio_datas + olefile_datas + extra_datas,
-    hiddenimports=(
-        libvisio_hidden
-        + olefile_hidden
-        + [
-            "libvisio_ng",
-            "olefile",
-            "xml.etree.ElementTree",
-            "zipfile",
-            "PySide6.QtSvg",
-            "PySide6.QtSvgWidgets",
-        ]
-    ),
+    hiddenimports=[
+        "libvisio_ng",
+        "olefile",
+        "xml.etree.ElementTree",
+        "zipfile",
+        "PySide6.QtSvg",
+        "PySide6.QtSvgWidgets",
+    ],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],

@@ -79,6 +79,8 @@ if errorlevel 1 (
 echo [3/5] Cleaning old build artifacts...
 if exist "build\dist\VisioViewer" rmdir /s /q "build\dist\VisioViewer"
 if exist "build\build\VisioViewer" rmdir /s /q "build\build\VisioViewer"
+if exist "build\build\VisioViewer.pkg" del /q "build\build\VisioViewer.pkg"
+if exist "build\VisioViewer.spec.bak" del /q "build\VisioViewer.spec.bak"
 
 echo [4/5] Building with PyInstaller (this may take a few minutes)...
 cd build
@@ -90,7 +92,14 @@ if errorlevel 1 (
 )
 cd ..
 
-echo [5/5] Build complete!
+echo [5/5] Verifying bundle...
+if exist "build\dist\VisioViewer\_internal\libvisio_ng" (
+    echo   libvisio_ng: OK
+) else (
+    echo   [WARN] libvisio_ng not found in bundle. Check spec file.
+)
+
+echo Build complete!
 echo.
 echo  +--------------------------------------------------+
 echo  ^|  EXE is here:                                    ^|
