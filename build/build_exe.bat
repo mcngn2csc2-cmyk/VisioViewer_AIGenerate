@@ -25,7 +25,7 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo [1/5] Creating virtual environment...
+echo [1/6] Creating virtual environment...
 cd /d "%~dp0.."
 if exist ".venv_build" (
     echo     Removing existing virtual environment...
@@ -38,7 +38,7 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo [2/5] Installing dependencies...
+echo [2/6] Installing dependencies...
 call .venv_build\Scripts\activate.bat
 
 pip install --upgrade pip >nul
@@ -47,7 +47,6 @@ echo   Installing libvisio-ng...
 pip install libvisio-ng
 if errorlevel 1 (
     echo [ERROR] Failed to install libvisio-ng.
-    echo         Check your internet connection and try again.
     pause
     exit /b 1
 )
@@ -76,13 +75,11 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo [3/5] Cleaning old build artifacts...
+echo [3/6] Cleaning old build artifacts...
 if exist "build\dist\VisioViewer" rmdir /s /q "build\dist\VisioViewer"
 if exist "build\build\VisioViewer" rmdir /s /q "build\build\VisioViewer"
-if exist "build\build\VisioViewer.pkg" del /q "build\build\VisioViewer.pkg"
-if exist "build\VisioViewer.spec.bak" del /q "build\VisioViewer.spec.bak"
 
-echo [4/5] Building with PyInstaller (this may take a few minutes)...
+echo [4/6] Building with PyInstaller (this may take a few minutes)...
 cd build
 pyinstaller visio_viewer.spec
 if errorlevel 1 (
@@ -92,31 +89,37 @@ if errorlevel 1 (
 )
 cd ..
 
-echo [5/5] Verifying bundle...
-if exist "build\dist\VisioViewer\_internal\libvisio_ng" (
-    echo   libvisio_ng: OK
-) else (
-    echo   [WARN] libvisio_ng not found in bundle. Check spec file.
+echo [5/6] Copying libvisio_ng and olefile into bundle...
+python -c ^
+  "import libvisio_ng, olefile, shutil, os, sys; ^
+   base = os.path.join('build', 'dist', 'VisioViewer', '_internal'); ^
+   pkgs = {'libvisio_ng': libvisio_ng, 'olefile': olefile}; ^
+   [shutil.copytree(os.path.dirname(m.__file__), os.path.join(base, name), dirs_exist_ok=True) for name, m in pkgs.items()]; ^
+   print('  Copied libvisio_ng and olefile to _internal/')"
+if errorlevel 1 (
+    echo [ERROR] Failed to copy packages into bundle.
+    pause
+    exit /b 1
 )
 
-echo Build complete!
+echo [6/6] Verifying bundle...
+if exist "build\dist\VisioViewer\_internal\libvisio_ng" (
+    echo   libvisio_ng : OK
+) else (
+    echo   [WARN] libvisio_ng not found in bundle.
+)
+if exist "build\dist\VisioViewer\_internal\olefile" (
+    echo   olefile     : OK
+) else (
+    echo   [WARN] olefile not found in bundle.
+)
+
 echo.
 echo  +--------------------------------------------------+
 echo  ^|  EXE is here:                                    ^|
 echo  ^|  build\dist\VisioViewer\VisioViewer.exe          ^|
 echo  ^|                                                  ^|
-echo  ^|  NOTE: Do NOT run build\build\... that is a     ^|
-echo  ^|        temporary folder used during build only. ^|
+echo  ^|  Distribute the entire VisioViewer\ folder.     ^|
 echo  +--------------------------------------------------+
-echo.
-
-REM --- Show output size ---
-for /f "tokens=3" %%a in ('dir /s "build\dist\VisioViewer" ^| findstr "File(s)"') do (
-    set SIZE=%%a
-)
-echo  Total size: %SIZE% bytes
-
-echo.
-echo Distribute the entire build\dist\VisioViewer\ folder.
 echo.
 pause
