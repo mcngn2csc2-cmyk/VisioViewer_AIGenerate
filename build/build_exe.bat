@@ -41,11 +41,37 @@ if errorlevel 1 (
 echo [2/5] Installing dependencies...
 call .venv_build\Scripts\activate.bat
 
-REM Use pyside6-essentials to reduce EXE size
 pip install --upgrade pip >nul
-pip install pyside6-essentials libvisio-ng pyinstaller
+
+echo   Installing libvisio-ng...
+pip install libvisio-ng
 if errorlevel 1 (
-    echo [ERROR] Failed to install packages.
+    echo [ERROR] Failed to install libvisio-ng.
+    echo         Check your internet connection and try again.
+    pause
+    exit /b 1
+)
+
+echo   Verifying libvisio-ng...
+python -c "import libvisio_ng; print('  libvisio-ng OK:', libvisio_ng.__version__)"
+if errorlevel 1 (
+    echo [ERROR] libvisio-ng installed but cannot be imported.
+    pause
+    exit /b 1
+)
+
+echo   Installing PySide6...
+pip install pyside6-essentials
+if errorlevel 1 (
+    echo [ERROR] Failed to install pyside6-essentials.
+    pause
+    exit /b 1
+)
+
+echo   Installing PyInstaller...
+pip install pyinstaller
+if errorlevel 1 (
+    echo [ERROR] Failed to install pyinstaller.
     pause
     exit /b 1
 )
