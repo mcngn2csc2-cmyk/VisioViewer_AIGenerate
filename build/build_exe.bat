@@ -90,12 +90,7 @@ if errorlevel 1 (
 cd ..
 
 echo [5/6] Copying libvisio_ng and olefile into bundle...
-python -c ^
-  "import libvisio_ng, olefile, shutil, os, sys; ^
-   base = os.path.join('build', 'dist', 'VisioViewer', '_internal'); ^
-   pkgs = {'libvisio_ng': libvisio_ng, 'olefile': olefile}; ^
-   [shutil.copytree(os.path.dirname(m.__file__), os.path.join(base, name), dirs_exist_ok=True) for name, m in pkgs.items()]; ^
-   print('  Copied libvisio_ng and olefile to _internal/')"
+python build\copy_packages.py
 if errorlevel 1 (
     echo [ERROR] Failed to copy packages into bundle.
     pause
