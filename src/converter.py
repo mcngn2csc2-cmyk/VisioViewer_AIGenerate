@@ -77,15 +77,26 @@ def _do_convert(
     with tempfile.TemporaryDirectory(prefix="visio_viewer_") as tmp_dir:
         tmp_path = Path(tmp_dir)
 
-        # libvisio-ng で変換（output_dirにSVGファイルが生成される）
-        libvisio_ng.convert(str(file_path), output_dir=str(tmp_path))
+        # libvisio_ng.convert() を呼び出す
+        # 戻り値がファイルパスのリストの場合とNoneの場合どちらも対処
+        result = libvisio_ng.convert(str(file_path), output_dir=str(tmp_path))
 
-        # 生成されたSVGファイルを収集（ページ順にソート）
-        svg_files = sorted(tmp_path.glob("*.svg"), key=_page_sort_key)
+        # 戻り値がファイルパスリストなら直接使用、そうでなければディレクトリを走査
+        if isinstance(result, (list, tuple)) and result:
+            svg_files = [Path(p) for p in result if str(p).endswith(".svg")]
+        else:
+            svg_files = sorted(tmp_path.glob("*.svg"), key=_page_sort_key)
 
         if not svg_files:
-            return ConversionResult(error="SVGの生成に失敗しました（出力ファイルがありません）")
+            all_files = list(tmp_path.iterdir())
+            file_list = ", ".join(f.name for f in all_files) if all_files else "（なし）"
+            return ConversionResult(
+                error=f"SVGの生成に失敗しました。\n\n"
+                      f"出力ディレクトリ: {tmp_path}\n"
+                      f"生成されたファイル: {file_list}"
+            )
 
+        svg_files = sorted(svg_files, key=_page_sort_key)
         total = len(svg_files)
         pages: list[bytes] = []
         page_names: list[str] = []
@@ -95,6 +106,8 @@ def _do_convert(
                 progress_callback(i + 1, total)
 
             svg_bytes = svg_file.read_bytes()
+            if not svg_bytes:
+                svg_bytes = b'<svg xmlns="http://www.w3.org/2000/svg"><text y="20">Page empty</text></svg>'
             pages.append(svg_bytes)
             page_names.append(_make_page_name(svg_file, i))
 

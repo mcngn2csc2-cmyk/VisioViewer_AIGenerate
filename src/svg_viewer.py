@@ -13,6 +13,7 @@ from PySide6.QtGui import (
     QBrush,
     QPen,
 )
+from PySide6.QtSvg import QSvgRenderer
 from PySide6.QtSvgWidgets import QGraphicsSvgItem
 from PySide6.QtWidgets import (
     QGraphicsScene,
@@ -72,25 +73,29 @@ class SvgViewer(QGraphicsView):
         self._scene.clear()
         self._svg_item = None
 
-        item = QGraphicsSvgItem()
-        item.renderer().load(QByteArray(svg_data))
-
-        # SVGのデフォルトサイズが不正な場合に備えてサイズを確認
-        default_size = item.renderer().defaultSize()
-        if default_size.width() <= 0 or default_size.height() <= 0:
-            self._scene.addText("SVGの読み込みに失敗しました")
+        renderer = QSvgRenderer(QByteArray(svg_data))
+        if not renderer.isValid():
+            self._scene.addText("SVGの読み込みに失敗しました（不正なSVGデータ）")
             return
 
-        item.setFlags(item.GraphicsItemFlag.ItemClipsToShape)
+        default_size = renderer.defaultSize()
+        view_box = renderer.viewBoxF()
+
+        # 表示サイズを決定: viewBox > defaultSize > フォールバック の優先順
+        if not view_box.isNull() and view_box.width() > 0:
+            rect = view_box
+        elif default_size.width() > 0 and default_size.height() > 0:
+            rect = QRectF(0, 0, default_size.width(), default_size.height())
+        else:
+            self._scene.addText("SVGのサイズが取得できませんでした")
+            return
+
+        item = QGraphicsSvgItem()
+        item.setSharedRenderer(renderer)
         item.setCacheMode(item.CacheMode.DeviceCoordinateCache)
 
         self._scene.addItem(item)
         self._svg_item = item
-
-        # シーンの矩形を SVG サイズに合わせる
-        rect = QRectF(item.renderer().viewBoxF())
-        if rect.isNull():
-            rect = QRectF(0, 0, default_size.width(), default_size.height())
         self._scene.setSceneRect(rect)
 
         # ビューをリセットして全体表示
