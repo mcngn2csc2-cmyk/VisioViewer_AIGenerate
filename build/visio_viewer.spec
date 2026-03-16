@@ -1,31 +1,31 @@
 # -*- mode: python ; coding: utf-8 -*-
 #
-# visio_viewer.spec - PyInstaller ビルド設定
+# visio_viewer.spec - PyInstaller build configuration
 #
-# 使い方:
+# Usage:
 #   cd build
 #   pyinstaller visio_viewer.spec
 #
-# 生成物: dist/VisioViewer/VisioViewer.exe (フォルダ配布)
-#         または --onefile オプションで単一EXEも可能
+# Output: dist/VisioViewer/VisioViewer.exe
 
-import sys
 from pathlib import Path
 
 SRC_DIR = str(Path("../src").resolve())
-RESOURCES_DIR = str(Path("../resources").resolve())
-ICON_PATH = str(Path("../resources/icon.ico").resolve())
+RESOURCES_DIR = Path("../resources").resolve()
+ICON_PATH = RESOURCES_DIR / "icon.ico"
 
 block_cipher = None
+
+# Only include resources folder if it exists and has files
+datas = []
+if RESOURCES_DIR.exists() and any(RESOURCES_DIR.iterdir()):
+    datas.append((str(RESOURCES_DIR), "resources"))
 
 a = Analysis(
     [str(Path(SRC_DIR) / "main.py")],
     pathex=[SRC_DIR],
     binaries=[],
-    datas=[
-        # リソースファイルをEXEに同梱
-        (RESOURCES_DIR, "resources"),
-    ],
+    datas=datas,
     hiddenimports=[
         # libvisio-ng の動的インポートに備えて明示
         "libvisio_ng",
@@ -81,7 +81,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=ICON_PATH if Path(ICON_PATH).exists() else None,
+    icon=str(ICON_PATH) if ICON_PATH.exists() else None,
 )
 
 coll = COLLECT(
