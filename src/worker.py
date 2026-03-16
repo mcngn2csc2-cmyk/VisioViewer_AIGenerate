@@ -3,11 +3,13 @@ worker.py - Visio変換をバックグラウンドスレッドで実行する QT
 """
 from __future__ import annotations
 
+import traceback
 from pathlib import Path
 
 from PySide6.QtCore import QThread, Signal
 
 from converter import ConversionResult, convert_visio
+from logger import log
 
 
 class ConversionWorker(QThread):
@@ -29,10 +31,15 @@ class ConversionWorker(QThread):
 
     def run(self) -> None:
         """スレッドのメイン処理"""
-        result = convert_visio(
-            self._file_path,
-            progress_callback=self._on_progress,
-        )
+        try:
+            result = convert_visio(
+                self._file_path,
+                progress_callback=self._on_progress,
+            )
+        except BaseException as e:
+            tb = traceback.format_exc()
+            log.critical(f"Worker thread crashed:\n{tb}")
+            result = ConversionResult(error=f"クラッシュ:\n{e}\n\n{tb}")
         if not self._cancelled:
             self.finished.emit(result)
 

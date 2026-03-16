@@ -9,12 +9,14 @@ from pathlib import Path
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication
 
+from logger import log
 from main_window import MainWindow
 
 APP_VERSION = "1.0.0"
 
 
 def main() -> None:
+    log.info("=== Visio Viewer starting ===")
     app = QApplication(sys.argv)
     app.setApplicationName("Visio Viewer")
     app.setApplicationVersion(APP_VERSION)
