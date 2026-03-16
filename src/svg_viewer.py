@@ -3,7 +3,7 @@ svg_viewer.py - SVG を表示する QGraphicsView ウィジェット（ズーム
 """
 from __future__ import annotations
 
-from PySide6.QtCore import Qt, QByteArray, QRectF, Signal
+from PySide6.QtCore import Qt, QByteArray, Signal
 from PySide6.QtGui import (
     QWheelEvent,
     QKeySequence,
@@ -79,18 +79,6 @@ class SvgViewer(QGraphicsView):
             self._scene.addText("SVGの読み込みに失敗しました（不正なSVGデータ）")
             return
 
-        default_size = renderer.defaultSize()
-        view_box = renderer.viewBoxF()
-
-        # 表示サイズを決定: viewBox > defaultSize > フォールバック の優先順
-        if not view_box.isNull() and view_box.width() > 0:
-            rect = view_box
-        elif default_size.width() > 0 and default_size.height() > 0:
-            rect = QRectF(0, 0, default_size.width(), default_size.height())
-        else:
-            self._scene.addText("SVGのサイズが取得できませんでした")
-            return
-
         item = QGraphicsSvgItem()
         # renderer をインスタンス変数に保持する（ローカル変数だと GC に回収されてクラッシュする）
         self._renderer = renderer
@@ -99,7 +87,12 @@ class SvgViewer(QGraphicsView):
 
         self._scene.addItem(item)
         self._svg_item = item
-        self._scene.setSceneRect(rect)
+
+        # QGraphicsSvgItem の実際の描画サイズは renderer.defaultSize() ベース。
+        # viewBox の座標系（Visio は EMU 単位など巨大な値を使う）をそのまま
+        # setSceneRect に使うと item の座標系と食い違い、位置・縮尺が崩れる。
+        # item.boundingRect() を使うことで両者を一致させる。
+        self._scene.setSceneRect(item.boundingRect())
 
         # ビューをリセットして全体表示
         self.resetTransform()
