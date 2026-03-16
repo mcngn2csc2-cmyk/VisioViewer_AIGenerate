@@ -51,8 +51,8 @@ if errorlevel 1 (
 )
 
 echo [3/5] Cleaning old build artifacts...
-if exist "dist\VisioViewer" rmdir /s /q "dist\VisioViewer"
-if exist "build\VisioViewer" rmdir /s /q "build\VisioViewer"
+if exist "build\dist\VisioViewer" rmdir /s /q "build\dist\VisioViewer"
+if exist "build\build\VisioViewer" rmdir /s /q "build\build\VisioViewer"
 
 echo [4/5] Building with PyInstaller (this may take a few minutes)...
 cd build
@@ -66,16 +66,16 @@ cd ..
 
 echo [5/5] Build complete!
 echo.
-echo  Output: dist\VisioViewer\VisioViewer.exe
+echo  Output: build\dist\VisioViewer\VisioViewer.exe
 echo.
 
 REM --- Show output size ---
-for /f "tokens=3" %%a in ('dir /s "dist\VisioViewer" ^| findstr "File(s)"') do (
+for /f "tokens=3" %%a in ('dir /s "build\dist\VisioViewer" ^| findstr "File(s)"') do (
     set SIZE=%%a
 )
 echo  Total size: %SIZE% bytes
 
 echo.
-echo Success! Distribute the dist\VisioViewer\ folder.
+echo Success! Distribute the build\dist\VisioViewer\ folder.
 echo.
 pause
