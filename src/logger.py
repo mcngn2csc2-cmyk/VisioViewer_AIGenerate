@@ -5,7 +5,6 @@ EXE と同じフォルダに visio_viewer.log として出力される。
 from __future__ import annotations
 
 import logging
-import os
 import sys
 from pathlib import Path
 

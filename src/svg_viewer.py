@@ -11,7 +11,6 @@ from PySide6.QtGui import (
     QColor,
     QPainter,
     QBrush,
-    QPen,
 )
 from PySide6.QtSvg import QSvgRenderer
 from PySide6.QtSvgWidgets import QGraphicsSvgItem
