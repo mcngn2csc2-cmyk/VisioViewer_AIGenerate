@@ -92,7 +92,13 @@ cd ..
 
 echo [5/5] Build complete!
 echo.
-echo  Output: build\dist\VisioViewer\VisioViewer.exe
+echo  +--------------------------------------------------+
+echo  ^|  EXE is here:                                    ^|
+echo  ^|  build\dist\VisioViewer\VisioViewer.exe          ^|
+echo  ^|                                                  ^|
+echo  ^|  NOTE: Do NOT run build\build\... that is a     ^|
+echo  ^|        temporary folder used during build only. ^|
+echo  +--------------------------------------------------+
 echo.
 
 REM --- Show output size ---
@@ -102,6 +108,6 @@ for /f "tokens=3" %%a in ('dir /s "build\dist\VisioViewer" ^| findstr "File(s)"'
 echo  Total size: %SIZE% bytes
 
 echo.
-echo Success! Distribute the build\dist\VisioViewer\ folder.
+echo Distribute the entire build\dist\VisioViewer\ folder.
 echo.
 pause

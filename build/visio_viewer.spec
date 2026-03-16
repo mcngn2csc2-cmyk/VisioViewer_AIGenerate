@@ -6,9 +6,10 @@
 #   cd build
 #   pyinstaller visio_viewer.spec
 #
-# Output: dist/VisioViewer/VisioViewer.exe
+# Output: dist/VisioViewer/VisioViewer.exe  (run THIS, not build/VisioViewer/)
 
 from pathlib import Path
+from PyInstaller.utils.hooks import collect_all, collect_data_files
 
 SRC_DIR = str(Path("../src").resolve())
 RESOURCES_DIR = Path("../resources").resolve()
@@ -16,31 +17,36 @@ ICON_PATH = RESOURCES_DIR / "icon.ico"
 
 block_cipher = None
 
-# Only include resources folder if it exists and has files
-datas = []
+# --- Collect libvisio_ng and olefile completely (all files, not just the module) ---
+libvisio_datas, libvisio_binaries, libvisio_hidden = collect_all("libvisio_ng")
+olefile_datas, olefile_binaries, olefile_hidden = collect_all("olefile")
+
+# --- Resources folder (optional) ---
+extra_datas = []
 if RESOURCES_DIR.exists() and any(RESOURCES_DIR.iterdir()):
-    datas.append((str(RESOURCES_DIR), "resources"))
+    extra_datas.append((str(RESOURCES_DIR), "resources"))
 
 a = Analysis(
     [str(Path(SRC_DIR) / "main.py")],
     pathex=[SRC_DIR],
-    binaries=[],
-    datas=datas,
-    hiddenimports=[
-        # libvisio-ng の動的インポートに備えて明示
-        "libvisio_ng",
-        "olefile",
-        "xml.etree.ElementTree",
-        "zipfile",
-        # PySide6 SVG モジュール
-        "PySide6.QtSvg",
-        "PySide6.QtSvgWidgets",
-    ],
+    binaries=libvisio_binaries + olefile_binaries,
+    datas=libvisio_datas + olefile_datas + extra_datas,
+    hiddenimports=(
+        libvisio_hidden
+        + olefile_hidden
+        + [
+            "libvisio_ng",
+            "olefile",
+            "xml.etree.ElementTree",
+            "zipfile",
+            "PySide6.QtSvg",
+            "PySide6.QtSvgWidgets",
+        ]
+    ),
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
     excludes=[
-        # 不要なQtモジュールを除外してファイルサイズを削減
         "PySide6.QtWebEngine",
         "PySide6.QtWebEngineWidgets",
         "PySide6.QtWebEngineCore",
@@ -50,7 +56,6 @@ a = Analysis(
         "PySide6.Qt3DRender",
         "PySide6.QtDataVisualization",
         "PySide6.QtCharts",
-        # 標準ライブラリの不要モジュール
         "unittest",
         "email",
         "html",
@@ -75,8 +80,8 @@ exe = EXE(
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True,                         # UPX圧縮（インストール済みの場合）
-    console=False,                    # コンソールウィンドウを非表示
+    upx=True,
+    console=False,
     disable_windowed_traceback=False,
     target_arch=None,
     codesign_identity=None,
