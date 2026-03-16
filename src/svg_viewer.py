@@ -43,6 +43,7 @@ class SvgViewer(QGraphicsView):
         self._scene = QGraphicsScene(self)
         self._svg_item: QGraphicsSvgItem | None = None
         self._zoom_factor: float = 1.0
+        self._is_initial_fit: bool = True  # True while no manual zoom has been applied
 
         self.setScene(self._scene)
         self.setRenderHints(
@@ -95,6 +96,7 @@ class SvgViewer(QGraphicsView):
         # ビューをリセットして全体表示
         self.resetTransform()
         self._zoom_factor = 1.0
+        self._is_initial_fit = True
         self.fit_to_window()
 
     def clear(self) -> None:
@@ -139,7 +141,7 @@ class SvgViewer(QGraphicsView):
     def resizeEvent(self, event) -> None:
         super().resizeEvent(event)
         # ウィンドウリサイズ時に初期表示だった場合は追従する
-        if self._svg_item is not None and self._zoom_factor == 1.0:
+        if self._svg_item is not None and self._is_initial_fit:
             self.fit_to_window()
 
     # ─────────────────────────────────────────────
@@ -152,4 +154,5 @@ class SvgViewer(QGraphicsView):
             return
         self.scale(factor, factor)
         self._zoom_factor = new_zoom
+        self._is_initial_fit = False  # User has manually zoomed
         self.zoom_changed.emit(self._zoom_factor)
